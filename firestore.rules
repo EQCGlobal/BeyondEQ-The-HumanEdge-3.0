@@ -1,0 +1,206 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+
+    function isValidNewsletterSubscription(data) {
+      return data.email is string && data.email.size() <= 200
+             && (data.get('source', null) == null || (data.source is string && data.source.size() <= 100))
+             && data.createdAt == request.time;
+    }
+
+    function isValidFriend(data) {
+      return data.friendId is string && data.friendId.size() <= 128
+             && data.friendName is string && data.friendName.size() <= 150
+             && (data.get('friendEmail', null) == null || (data.friendEmail is string && data.friendEmail.size() <= 150))
+             && data.streak is number && data.streak >= 0;
+    }
+
+    function isValidReflection(data) {
+      return data.situation is string && data.situation.size() <= 2000
+             && (data.get('reaction', null) == null || (data.reaction is string && data.reaction.size() <= 2000))
+             && (data.get('intensity', null) == null || (data.intensity is number && data.intensity >= 1 && data.intensity <= 5))
+             && (data.get('trigger', null) == null || (data.trigger is string && (data.trigger == 'internal' || data.trigger == 'external' || data.trigger == '')))
+             && (data.get('whoInvolved', null) == null || (data.whoInvolved is string && data.whoInvolved.size() <= 1000))
+             && (data.get('physicalSymptoms', null) == null || (data.physicalSymptoms is list && data.physicalSymptoms.size() <= 100))
+             && (data.get('customSymptom', null) == null || (data.customSymptom is string && data.customSymptom.size() <= 500))
+             && (data.get('thoughts', null) == null || (data.thoughts is string && data.thoughts.size() <= 2000))
+             && (data.get('outcome', null) == null || (data.outcome is string && data.outcome.size() <= 2000))
+             && (data.get('differently', null) == null || (data.differently is string && data.differently.size() <= 2000));
+    }
+
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() <= 128
+             && data.name is string && data.name.size() <= 100
+             && (data.get('email', null) == null || (data.email is string && data.email.size() <= 150))
+             && (data.get('phone', null) == null || (data.phone is string && data.phone.size() <= 50))
+             && (data.get('age', null) == null || (data.age is number && data.age >= 0 && data.age <= 120))
+             && (data.get('profession', null) == null || (data.profession is string && data.profession.size() <= 100))
+             && (data.get('state', null) == null || (data.state is string && data.state.size() <= 100))
+             && (data.get('city', null) == null || (data.city is string && data.city.size() <= 100))
+             && (data.get('gender', null) == null || (data.gender is string && data.gender.size() <= 50))
+             && (data.get('selfDiscoveryCompleted', null) == null || data.selfDiscoveryCompleted is bool)
+             && (data.get('selfDiscoveryAnswers', null) == null || (data.selfDiscoveryAnswers is list && data.selfDiscoveryAnswers.size() <= 50))
+             && (data.get('selfDiscoveryScores', null) == null || data.selfDiscoveryScores is map)
+             && (data.get('selfDiscoveryLevel', null) == null || (data.selfDiscoveryLevel is number && data.selfDiscoveryLevel >= 1 && data.selfDiscoveryLevel <= 6))
+             && (data.get('selfDiscoveryObservations', null) == null || (data.selfDiscoveryObservations is list && data.selfDiscoveryObservations.size() <= 20))
+             && (data.get('selfDiscoveryObserversPlan', null) == null || data.selfDiscoveryObserversPlan is map)
+             && (data.get('threeSixtySelfCompleted', null) == null || data.threeSixtySelfCompleted is bool)
+             && (data.get('threeSixtySelfAnswers', null) == null || data.threeSixtySelfAnswers is map)
+             && (data.get('threeSixtySelfImpacts', null) == null || data.threeSixtySelfImpacts is map)
+             && (data.get('cmmLevel', null) == null || (data.cmmLevel is number && data.cmmLevel >= 1 && data.cmmLevel <= 6))
+             && (data.get('assessmentScores', null) == null || data.assessmentScores is map)
+             && (data.get('threeSixtyCompleted', null) == null || data.threeSixtyCompleted is bool)
+             && (data.get('threeSixtyScores', null) == null || data.threeSixtyScores is map)
+             && (data.get('assignments', null) == null || (data.assignments is list && data.assignments.size() <= 20))
+             && (data.get('sessions', null) == null || (data.sessions is list && data.sessions.size() <= 20))
+             && (data.get('tier', null) == null || (data.tier is string && (data.tier == 'free' || data.tier == 'premium')))
+             && (data.get('enterpriseAssessmentsCompleted', null) == null || data.enterpriseAssessmentsCompleted is map)
+             && (data.get('enterpriseInvitedBy', null) == null || data.enterpriseInvitedBy is string)
+             && (data.get('userType', null) == null || data.userType is string)
+             && (data.get('company', null) == null || data.company is string)
+             && (data.get('designation', null) == null || data.designation is string)
+             && (data.get('location', null) == null || data.location is string)
+             && (data.get('enterpriseAnswers_1', null) == null || data.enterpriseAnswers_1 is list)
+             && (data.get('enterpriseAnswers_2', null) == null || data.enterpriseAnswers_2 is list)
+             && (data.get('enterpriseAnswers_3', null) == null || data.enterpriseAnswers_3 is list)
+             && (data.get('enterpriseAnswers_4', null) == null || data.enterpriseAnswers_4 is list)
+             && (data.get('enterpriseAnswers_5', null) == null || data.enterpriseAnswers_5 is list)
+             && (data.get('introPhilosophyCompleted', null) == null || data.introPhilosophyCompleted is bool)
+             && (data.get('introTemplateCompleted', null) == null || data.introTemplateCompleted is bool)
+             && (data.get('introTutorialCompleted', null) == null || data.introTutorialCompleted is bool)
+             && (data.get('premiumPromoActive', null) == null || data.premiumPromoActive is bool)
+             && (data.get('hasPremiumPromoActive', null) == null || data.hasPremiumPromoActive is bool)
+             && (data.get('hasFreeTool5Access', null) == null || data.hasFreeTool5Access is bool)
+             && (data.get('hasAdminMasterAccess', null) == null || data.hasAdminMasterAccess is bool)
+             && (data.get('streakPromoActivatedAt', null) == null || data.streakPromoActivatedAt is timestamp);
+    }
+
+    function isValidPromoCode(data, codeId) {
+      return data.code == codeId
+             && data.code is string && data.code.size() <= 50
+             && data.type is string && (data.type == 'team' || data.type == 'testing')
+             && data.maxUses is number && data.maxUses >= 1 && data.maxUses <= 100
+             && data.usedCount is number && data.usedCount == 0
+             && data.usersRedeemed is list && data.usersRedeemed.size() == 0;
+    }
+
+    function isValidOrganizationInvite(data) {
+      return (data.get('uid', null) == null || (data.get('uid', '') is string && data.get('uid', '').size() <= 128))
+             && data.get('email', '') is string && data.get('email', '').size() <= 150
+             && data.get('status', '') is string && (data.get('status', '') == 'pending' || data.get('status', '') == 'registered' || data.get('status', '') == 'claimed')
+             && (data.get('name', null) == null || (data.get('name', '') is string && data.get('name', '').size() <= 100));
+    }
+
+    match /promoCodes/{codeId} {
+      allow get: if isSignedIn();
+      allow list: if true;
+      allow delete: if true;
+      allow create: if isSignedIn() 
+                    && isValidPromoCode(request.resource.data, codeId)
+                    && request.resource.data.createdAt == request.time
+                    && (codeId == 'TEAM_EQ_1' || codeId == 'TEAM_EQ_2' || codeId == 'TEAM_EQ_3' || codeId == 'TEAM_EQ_4' || codeId == 'TEAM_EQ_5' || codeId == 'TEST_PREMIUM_2026' || codeId == 'TEST_CODE_5' || codeId == 'SPECIAL_TEST_CODE' || codeId == 'TEST10' || codeId == 'IPN40M' || codeId == 'FREE_TOOL5_55' || codeId == 'ADMIN1');
+      allow update: if isSignedIn()
+                    && request.resource.data.code == resource.data.code
+                    && request.resource.data.type == resource.data.type
+                    && request.resource.data.maxUses == resource.data.maxUses
+                    && request.resource.data.usedCount == resource.data.usedCount + 1
+                    && request.resource.data.usersRedeemed.size() == resource.data.usersRedeemed.size() + 1
+                    && request.resource.data.usersRedeemed.hasAll(resource.data.usersRedeemed)
+                    && request.resource.data.usersRedeemed.hasAny([request.auth.uid])
+                    && request.resource.data.usedCount <= resource.data.maxUses
+                    && request.resource.data.createdAt == resource.data.createdAt
+                    && (request.resource.data.get('updatedAt', null) == null || request.resource.data.updatedAt == request.time);
+    }
+
+    match /users/{userId} {
+      allow get: if true;
+      allow list: if true;
+      allow delete: if true;
+      allow create: if isOwner(userId) 
+                    && isValidUser(request.resource.data) 
+                    && request.resource.data.uid == request.auth.uid
+                    && (request.resource.data.keys().hasAll(['uid', 'name', 'createdAt'])) 
+                    && request.resource.data.createdAt == request.time;
+      allow update: if (
+                      (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                        'name', 'age', 'profession', 'state', 'city', 'gender', 'updatedAt',
+                        'selfDiscoveryCompleted', 'selfDiscoveryAnswers', 'selfDiscoveryScores',
+                        'selfDiscoveryLevel', 'selfDiscoveryObservations', 'selfDiscoveryObserversPlan',
+                        'threeSixtySelfCompleted', 'threeSixtySelfAnswers', 'threeSixtySelfImpacts',
+                        'cmmLevel', 'assessmentScores', 'threeSixtyCompleted', 'threeSixtyScores',
+                        'assignments', 'sessions', 'tier', 'hasFreeTool5Access', 'hasPremiumPromoActive',
+                        'hasAdminMasterAccess',
+                        'enterpriseAssessmentsCompleted', 'enterpriseInvitedBy', 'userType', 'company',
+                        'designation', 'location',
+                        'enterpriseAnswers_1', 'enterpriseAnswers_2', 'enterpriseAnswers_3', 'enterpriseAnswers_4', 'enterpriseAnswers_5',
+                        'introPhilosophyCompleted', 'introTemplateCompleted', 'introTutorialCompleted',
+                        'premiumPromoActive', 'streakPromoActivatedAt'
+                      ])) || (
+                        !isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                          'updatedAt', 'selfDiscoveryObserversPlan', 'threeSixtyCompleted', 'threeSixtyScores', 'cmmLevel', 'assessmentScores'
+                        ])
+                      )
+                    )
+                    && isValidUser(request.resource.data)
+                    && (request.resource.data.get('uid', null) == null || request.resource.data.get('uid', null) == resource.data.get('uid', null))
+                    && (request.resource.data.get('createdAt', null) == null || request.resource.data.get('createdAt', null) == resource.data.get('createdAt', null))
+                    && (request.resource.data.get('updatedAt', null) == null || request.resource.data.get('updatedAt', null) == resource.data.get('updatedAt', null) || request.resource.data.updatedAt == request.time);
+
+      match /friends/{friendId} {
+        allow get: if isOwner(userId) || isOwner(friendId);
+        allow list, delete: if true;
+        allow create: if (isOwner(userId) || isOwner(friendId)) 
+                      && isValidFriend(request.resource.data)
+                      && request.resource.data.createdAt == request.time
+                      && request.resource.data.lastActive == request.time;
+        allow update: if (isOwner(userId) || isOwner(friendId))
+                      && isValidFriend(request.resource.data)
+                      && request.resource.data.createdAt == resource.data.createdAt
+                      && request.resource.data.lastActive == request.time;
+      }
+
+      match /reflections/{reflectionId} {
+        allow get: if isOwner(userId);
+        allow list, delete: if true;
+        allow create: if isOwner(userId) && isValidReflection(request.resource.data) && request.resource.data.createdAt == request.time;
+        allow update: if isOwner(userId) && isValidReflection(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt;
+      }
+    }
+
+    match /users/{userId}/organizationInvites/{inviteId} {
+      allow get: if true;
+      allow list, delete: if true;
+      allow create: if (isOwner(userId) || (request.auth != null && inviteId == request.auth.uid))
+                    && isValidOrganizationInvite(request.resource.data)
+                    && (request.resource.data.get('createdAt', null) == null || request.resource.data.get('createdAt', null) == request.time)
+                    && (request.resource.data.get('registeredAt', null) == null || request.resource.data.get('registeredAt', null) == request.time);
+      allow update: if (isOwner(userId) || (request.auth != null && inviteId == request.auth.uid) || (request.auth != null && resource.data.status == 'pending' && request.resource.data.status == 'claimed' && request.resource.data.claimedBy == request.auth.uid))
+                    && isValidOrganizationInvite(request.resource.data)
+                    && (request.resource.data.get('createdAt', null) == null || request.resource.data.get('createdAt', null) == resource.data.get('createdAt', null))
+                    && (request.resource.data.get('registeredAt', null) == null || request.resource.data.get('registeredAt', null) == resource.data.get('registeredAt', null) || request.resource.data.get('registeredAt', null) == request.time || request.resource.data.get('claimedAt', null) == request.time);
+    }
+
+    match /supportRequests/{requestId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+
+    match /trainerApplications/{applicationId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+
+    match /newsletterSubscriptions/{subscriptionId} {
+      allow create: if isValidId(subscriptionId) && isValidNewsletterSubscription(request.resource.data);
+      allow read, update, delete: if false;
+    }
+  }
+}

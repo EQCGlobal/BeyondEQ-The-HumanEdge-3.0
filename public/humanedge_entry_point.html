@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>HumanEdge 3.0 — Self Discovery</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght=0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#e8e6f0;--text2:#9896a8;--text3:#5a5870;
+  --accent:#c4a882;--accent2:#8b7fd4;--accent3:#5db89a;
+  --danger:#d47f7f;--glow:rgba(196,168,130,0.12);
+}
+body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px}
+#app{width:100%;max-width:700px}
+.screen{display:none;animation:fadeIn 0.6s ease forwards}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.brand{font-size:10px;letter-spacing:0.35em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+.title-xl{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;line-height:1.1;color:var(--text)}
+.title-xl em{font-style:italic;color:var(--accent)}
+.title-lg{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;line-height:1.2;color:var(--text)}
+.title-lg em{font-style:italic;color:var(--accent)}
+.body-text{font-size:12px;color:var(--text2);line-height:1.9}
+.caption{font-size:10px;color:var(--text3);letter-spacing:0.08em;line-height:1.7}
+.label{font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--accent)}
+
+.divider{height:1px;background:var(--border);margin:24px 0}
+.card{background:var(--surface);border:1px solid var(--border2);padding:20px 24px;margin-bottom:12px}
+.card-accent{border-left:3px solid var(--accent)}
+.card-teal{border-left:3px solid var(--accent3)}
+.card-purple{border-left:3px solid var(--accent2)}
+.card-danger{border-left:3px solid var(--danger);background:rgba(212,127,127,0.04)}
+.meta-row{display:flex;gap:24px;flex-wrap:wrap;margin:20px 0}
+.meta-item{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em}
+.meta-item span{color:var(--text2);display:block;margin-top:4px;font-size:11px;text-transform:none;letter-spacing:0}
+
+.btn{display:inline-block;padding:12px 28px;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border:none;transition:all 0.2s ease;font-family:'DM Mono',monospace}
+.btn-primary{background:var(--accent);color:var(--bg)}
+.btn-primary:hover{background:#d4b892;box-shadow:0 0 24px var(--glow)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:0.4;pointer-events:none}
+.btn-row{display:flex;gap:12px;margin-top:28px;align-items:center;flex-wrap:wrap}
+
+.progress-wrap{margin-bottom:28px}
+.progress-label{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px}
+.progress-bar{height:2px;background:var(--border);overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width 0.5s cubic-bezier(0.4,0,0.2,1)}
+.stage-badge{display:inline-block;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(196,168,130,0.3);padding:4px 10px;margin-bottom:20px}
+
+.scenario-frame{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;font-style:italic;color:var(--text2);line-height:1.65;padding:20px 0 16px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:24px}
+.question-stem{font-size:12px;color:var(--text);line-height:1.8;margin-bottom:20px}
+.choice-grid{display:grid;gap:12px}
+.choice-card{background:var(--surface);border:1px solid var(--border);padding:18px 20px;cursor:pointer;transition:all 0.25s ease;position:relative}
+.choice-card:hover{border-color:var(--accent);background:var(--surface2)}
+.choice-card.selected{border-color:var(--accent);background:rgba(196,168,130,0.07)}
+.choice-label{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.choice-text{font-size:11px;color:var(--text2);line-height:1.75}
+.choice-cost{font-size:10px;color:var(--danger);margin-top:8px;padding-top:8px;border-top:1px solid rgba(212,127,127,0.2)}
+.choice-cost::before{content:"Cost: ";color:var(--text3)}
+.choice-card.selected .choice-text{color:var(--text)}
+
+.observation-item{padding:16px 20px;margin-bottom:10px;border:1px solid var(--border);position:relative}
+.observation-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent2)}
+.observation-title{font-size:11px;color:var(--text);margin-bottom:6px}
+.observation-body{font-size:11px;color:var(--text2);line-height:1.8}
+.observation-note{font-size:10px;color:var(--accent3);margin-top:8px;font-style:italic}
+
+.level-row{display:flex;align-items:stretch;gap:0;margin-bottom:8px;cursor:pointer}
+.level-num{width:48px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;flex-shrink:0}
+.level-body{flex:1;padding:12px 16px;border:1px solid var(--border)}
+.level-name{font-size:12px;color:var(--text);margin-bottom:4px}
+.level-tagline{font-size:10px;color:var(--text3);font-style:italic}
+.level-row:hover .level-body{border-color:var(--border2);background:var(--surface)}
+
+.observer-category{margin-bottom:20px}
+.observer-cat-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.observer-cat-badge{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;padding:4px 10px;border:1px solid}
+.badge-above{color:var(--accent);border-color:rgba(196,168,130,0.4)}
+.badge-peer{color:var(--accent2);border-color:rgba(139,127,212,0.4)}
+.badge-below{color:var(--accent3);border-color:rgba(93,184,154,0.4)}
+.badge-personal{color:var(--text2);border-color:var(--border2)}
+.observer-cat-count{font-size:10px;color:var(--text3)}
+.observer-criteria{font-size:11px;color:var(--text2);line-height:1.8;margin-bottom:8px}
+.criteria-list{list-style:none;padding:0}
+.criteria-list li{font-size:11px;color:var(--text2);line-height:1.8;padding-left:16px;position:relative}
+.criteria-list li::before{content:'—';position:absolute;left:0;color:var(--text3)}
+.criteria-list li.good::before{content:'✓';color:var(--accent3)}
+.criteria-list li.bad::before{content:'✗';color:var(--danger)}
+
+.observer-slots{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.observer-slot{display:flex;align-items:center;gap:10px}
+.observer-slot input{flex:1;background:var(--surface);border:1px solid var(--border2);padding:8px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;outline:none;transition:border-color 0.2s}
+.observer-slot input:focus{border-color:var(--accent)}
+.observer-slot input::placeholder{color:var(--text3)}
+.slot-cat{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;width:70px;flex-shrink:0}
+
+.loading{text-align:center;padding:60px 20px}
+.loading-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--text);margin-bottom:28px}
+.loading-step{font-size:11px;color:var(--text3);margin-bottom:8px;transition:color 0.4s}
+.loading-step.active{color:var(--accent)}
+.dots span{animation:blink 1.4s infinite}
+.dots span:nth-child(2){animation-delay:0.2s}
+.dots span:nth-child(3){animation-delay:0.4s}
+@keyframes blink{0%,80%,100%{opacity:0}40%{opacity:1}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ORIENTATION -->
+<div class="screen active" id="s-orientation">
+  <div class="brand">BeyondEQ · HumanEdge 3.0</div>
+  <div class="title-xl" style="margin-bottom:12px">Not who you<br><em>want to be.</em><br>Who you <em>are</em>.</div>
+  <div class="body-text" style="margin-top:16px;max-width:520px">Most emotional intelligence frameworks tell you what EQ is. HumanEdge 3.0 shows you where you actually operate — and gives you a precise path to where you want to go.</div>
+  <div class="divider"></div>
+  <div class="label" style="margin-bottom:14px">What this experience does</div>
+  <div class="card card-accent" style="margin-bottom:10px">
+    <div style="font-size:11px;color:var(--text);margin-bottom:6px">Surfaces how you currently think</div>
+    <div class="caption">Through forced-choice situations — where every option has a real cost — we reveal your actual priorities and patterns. Not your aspirational ones.</div>
+  </div>
+  <div class="card card-purple" style="margin-bottom:10px">
+    <div style="font-size:11px;color:var(--text);margin-bottom:6px">Introduces the HumanEdge framework</div>
+    <div class="caption">The 6 Emotional Maturity levels. The 15 skills. The tools. Enough to make the full 360 assessment meaningful when you get there.</div>
+  </div>
+  <div class="card card-teal">
+    <div style="font-size:11px;color:var(--text);margin-bottom:6px">Prepares you for the 360 diagnostic</div>
+    <div class="caption">This experience ends with a guide to selecting the right observers for your 360. The 360 is where real measurement happens. This is the preparation for it.</div>
+  </div>
+  <div class="divider"></div>
+  <div class="card card-danger">
+    <div style="font-size:11px;color:var(--text);margin-bottom:6px">This is not a level assessment</div>
+    <div class="caption">This experience surfaces observations about how you currently think — not where you operate. Measurement requires the 360. What you read here is directional — not diagnostic.</div>
+  </div>
+  <div class="meta-row">
+    <div class="meta-item">Duration<span>10–12 min</span></div>
+    <div class="meta-item">Scenarios<span>8 situations</span></div>
+    <div class="meta-item">Output<span>Thinking patterns + 360 prep</span></div>
+    <div class="meta-item">Format<span>Forced choice</span></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="initReflection()">Begin</button>
+  </div>
+</div>
+
+<!-- REFLECTION -->
+<div class="screen" id="s-reflection">
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span id="ref-stage-label">Stage 2 — Reflection</span>
+      <span id="ref-counter">1 / 8</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="ref-progress" style="width:0%"></div></div>
+  </div>
+  <div class="stage-badge" id="ref-badge">Situation</div>
+  <div class="scenario-frame" id="ref-context"></div>
+  <div class="question-stem" id="ref-stem"></div>
+  <div class="choice-grid" id="ref-choices"></div>
+  <div class="btn-row">
+    <button class="btn btn-primary" id="ref-next" onclick="nextScenario()" disabled>Continue</button>
+    <span class="caption" id="ref-hint">Choose the option that most honestly reflects what you would do</span>
+  </div>
+</div>
+
+<!-- PROCESSING -->
+<div class="screen" id="s-processing">
+  <div class="loading">
+    <div class="loading-title">Reading your patterns<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
+    <div class="loading-step" id="ps1">Mapping decision priorities</div>
+    <div class="loading-step" id="ps2">Identifying tradeoff patterns</div>
+    <div class="loading-step" id="ps3">Surfacing thinking tendencies</div>
+    <div class="loading-step" id="ps4">Preparing your observations</div>
+  </div>
+</div>
+
+<!-- PATTERNS -->
+<div class="screen" id="s-patterns">
+  <div class="stage-badge">Stage 3 — What we observed</div>
+  <div class="title-lg" style="margin-bottom:8px">How you currently<br><em>think and decide</em></div>
+  <div class="body-text" style="margin-bottom:24px">These are observations — not scores. They reflect the patterns in your choices. Read them with curiosity, not judgment.</div>
+  <div id="observations-list"></div>
+  <div class="divider"></div>
+  <div class="caption" style="margin-bottom:20px">These observations are directional. They tell you how you currently approach situations — not where your capability ceiling is. That is what the 360 measures.</div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="goTo('s-levels')">See the HumanEdge framework</button>
+  </div>
+</div>
+
+<!-- LEVELS -->
+<div class="screen" id="s-levels">
+  <div class="stage-badge">Stage 4 — The HumanEdge Framework</div>
+  <div class="title-lg" style="margin-bottom:8px">Six levels of<br><em>emotional maturity</em></div>
+  <div class="body-text" style="margin-bottom:24px">Not a hierarchy of better or worse people. A map of how human capability develops — from unconscious reaction to invisible influence. Most people operate between Levels 2 and 4. Few reach 5. Fewer still reach 6.</div>
+  <div id="levels-display"></div>
+  <div class="divider"></div>
+  <div class="card card-accent">
+    <div style="font-size:11px;color:var(--text);margin-bottom:6px">Where are you on this map?</div>
+    <div class="caption">This experience gives you a directional sense. The 360 diagnostic — where the people in your life rate your observable behaviors — gives you the real answer. The gap between how you see yourself and how others experience you is the most important data the 360 produces.</div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="goTo('s-observer-guide')">Prepare for your 360</button>
+  </div>
+</div>
+
+<!-- OBSERVER GUIDE -->
+<div class="screen" id="s-observer-guide">
+  <div class="stage-badge">Stage 5 — Your 360 Observer Guide</div>
+  <div class="title-lg" style="margin-bottom:8px">Choosing the right<br><em>observers</em></div>
+  <div class="body-text" style="margin-bottom:20px">The 360 is only as reliable as the observers you invite. This guide helps you select the right people — across the right relationship types — to produce meaningful data.</div>
+  <div class="divider"></div>
+  <div class="label" style="margin-bottom:16px">The four observer categories</div>
+
+  <div class="observer-category">
+    <div class="observer-cat-header">
+      <div class="observer-cat-badge badge-above">Above</div>
+      <div class="observer-cat-count">Invite 1–2 people</div>
+    </div>
+    <div class="observer-criteria">People who hold authority over you. They observe how you operate under scrutiny and accountability pressure.</div>
+    <ul class="criteria-list">
+      <li class="good">Has observed you across multiple situations over at least 3 months</li>
+      <li class="good">Has seen you under pressure — deadlines, conflict, difficult decisions</li>
+      <li class="good">Will give an honest rating even if it is uncomfortable</li>
+      <li class="bad">Someone you've worked with for less than 6 weeks</li>
+      <li class="bad">Someone who only sees you in formal, prepared contexts</li>
+    </ul>
+  </div>
+
+  <div class="observer-category">
+    <div class="observer-cat-header">
+      <div class="observer-cat-badge badge-peer">Peer</div>
+      <div class="observer-cat-count">Invite 2–3 people</div>
+    </div>
+    <div class="observer-criteria">People at a similar level who work alongside you. They observe how you operate without power differential.</div>
+    <ul class="criteria-list">
+      <li class="good">Works with you regularly — at least weekly interaction</li>
+      <li class="good">Has experienced conflict or disagreement with you</li>
+      <li class="good">Knows you well enough to notice when you're off your game</li>
+      <li class="bad">A close friend who primarily knows you socially</li>
+      <li class="bad">Someone who wants to please you or fears your reaction</li>
+    </ul>
+  </div>
+
+  <div class="observer-category">
+    <div class="observer-cat-header">
+      <div class="observer-cat-badge badge-below">Below</div>
+      <div class="observer-cat-count">Invite 1–2 people</div>
+    </div>
+    <div class="observer-criteria">People who report to you or work under your direction. The most important and most overlooked category. They observe how your capability holds — or drops — when you hold the power.</div>
+    <ul class="criteria-list">
+      <li class="good">Has experienced you under pressure — when you're stressed or conflicted</li>
+      <li class="good">Trusts that their honest feedback is genuinely safe to give</li>
+      <li class="good">Has seen how you handle mistakes — yours and theirs</li>
+      <li class="bad">Someone who feels their position depends on your approval</li>
+      <li class="bad">Someone you've recently had significant conflict with</li>
+    </ul>
+  </div>
+
+  <div class="observer-category">
+    <div class="observer-cat-header">
+      <div class="observer-cat-badge badge-personal">Personal</div>
+      <div class="observer-cat-count">Invite 1 person (optional)</div>
+    </div>
+    <div class="observer-criteria">Someone who knows you outside the professional context. Optional but powerful — they see behaviors professional observers never access.</div>
+    <ul class="criteria-list">
+      <li class="good">Knows you across multiple life contexts</li>
+      <li class="good">Will be honest without fear of damaging the relationship</li>
+      <li class="good">Has experienced conflict or difficulty with you</li>
+      <li class="bad">Someone currently in significant conflict with you</li>
+      <li class="bad">Someone who has never seen you under real pressure</li>
+    </ul>
+  </div>
+
+  <div class="divider"></div>
+  <div class="label" style="margin-bottom:12px">What to tell your observers</div>
+  <div class="card card-accent" style="margin-bottom:20px">
+    <div class="caption" style="font-size:11px;line-height:1.9">
+      <em>"I am completing a development assessment and I need your honest observations — not your support. The most useful thing you can do is rate what you actually observe, not what you think I would want to hear. Your identity will not be shared with me — only your observer category."</em>
+    </div>
+  </div>
+
+  <div class="label" style="margin-bottom:12px">Note your observer plan</div>
+  <div class="caption" style="margin-bottom:16px">Use this space to note who you plan to invite. For your reference only.</div>
+  <div id="observer-slots-container"></div>
+
+  <div class="divider"></div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="goTo('s-complete')">I'm ready for the 360</button>
+  </div>
+</div>
+
+<!-- COMPLETE -->
+<div class="screen" id="s-complete">
+  <div class="brand">HumanEdge 3.0</div>
+  <div class="title-xl" style="margin-bottom:16px">You are<br><em>ready.</em></div>
+  <div class="body-text" style="margin-bottom:24px">You have completed the preparation experience. What comes next is where the real measurement happens.</div>
+  <div class="card card-accent" style="margin-bottom:12px">
+    <div style="font-size:11px;color:var(--text);margin-bottom:8px">What you have done</div>
+    <div class="caption">Surfaced your current thinking patterns. Understood the HumanEdge framework. Identified the right observers for your 360.</div>
+  </div>
+  <div class="card card-purple" style="margin-bottom:12px">
+    <div style="font-size:11px;color:var(--text);margin-bottom:8px">What comes next — the 360 diagnostic</div>
+    <div class="caption">Your observers will rate your behaviors across 15 skills using 68 observable statements. You will rate yourself on the same statements. The gap between self and observer ratings — particularly across different relationship types — produces the real EMM level assessment and your development plan.</div>
+  </div>
+  <div class="card card-teal">
+    <div style="font-size:11px;color:var(--text);margin-bottom:8px">After the 360 — the facilitated debrief</div>
+    <div class="caption">A trained HumanEdge facilitator will walk you through your results. Not the numbers — the meaning. The patterns. The development path that is specific to you.</div>
+  </div>
+  <div class="divider"></div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="body-text" style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:300;font-style:italic;line-height:1.7;color:var(--text2)">
+      "The most important data the 360 will produce is not your score. It is the gap between how you see yourself and how others experience you. Approach that gap with curiosity — not defensiveness. It is the most honest mirror you will ever be offered."
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="initReflection()">Start again</button>
+    <button class="btn btn-primary" onclick="alert('Your 360 invitation will be sent to your registered email. Contact your HumanEdge facilitator to begin.')">Request my 360</button>
+  </div>
+</div>
+
+</div>
+<script>
+// ══════════════════════════════════════════
+// SCENARIOS — v4
+// Fixes: Scenarios 2 and 6 rewritten to remove
+// socially desirable lean. All 8 checked.
+// Both options in every scenario have
+// a genuine, non-obvious cost.
+// Tags used for pattern matching.
+// ══════════════════════════════════════════
+const scenarios = [
+  // S1 — Public contradiction
+  {
+    badge:"Situation 1 of 8",
+    context:"A colleague contradicts something you said in a meeting. They are wrong — and three people in the room know it. Your manager is present.",
+    stem:"You have two options. Choose the one that most honestly reflects what you would do.",
+    choices:[
+      {label:"Option A",text:"Correct them directly and clearly in the room now. The record needs to be set straight — especially with your manager present.",cost:"The colleague feels publicly embarrassed. The relationship takes a hit. You prioritise accuracy over harmony in this moment.",scores:{SR:2,CN:2,RA:1,IP:1},tags:["conflict","status","directness"]},
+      {label:"Option B",text:"Let it go in the room. Address it privately afterward — protecting the relationship matters more than winning this moment.",cost:"Others in the room may read your silence as concession. Your manager leaves with an inaccurate picture. The record stays uncorrected.",scores:{SR:3,RA:3,CN:3,IP:2},tags:["conflict","relationship","patience"]}
+    ]
+  },
+  // S2 — REWRITTEN: removes the "brave truth-teller" lean
+  // Old version: raise a problem now vs wait. Both versions had raising = brave.
+  // New version: two genuinely uncomfortable options around political risk
+  {
+    badge:"Situation 2 of 8",
+    context:"You have spotted a flaw in a plan your senior leader championed. Raising it now means being the person who publicly questions their judgment. Staying quiet means the flaw likely surfaces later — at which point you knew and said nothing.",
+    stem:"Choose the option that most honestly reflects what you would do.",
+    choices:[
+      {label:"Option A",text:"Raise it now — privately, directly, before it goes further. You accept the political risk of being seen as a critic.",cost:"You become the person who challenges the leader's thinking. Whether that lands well depends entirely on their character — and you don't yet know how they'll take it.",scores:{SR:3,C:3,CI:2,ST:2},tags:["courage","authority","risk"]},
+      {label:"Option B",text:"Stay quiet for now. The plan may work despite the flaw — and you might be wrong. You wait to see how things develop before putting yourself in the line.",cost:"If the flaw surfaces later you will have known. That knowledge — and your silence — will be part of the story. Others may question your judgment or your integrity.",scores:{SR:2,IP:2,ST:3,RA:2},tags:["caution","self-protection","patience"]}
+    ]
+  },
+  // S3 — Underperforming direct report
+  {
+    badge:"Situation 3 of 8",
+    context:"Someone you manage is underperforming. They are visibly struggling and you suspect personal circumstances are involved. A formal review is required by your organisation.",
+    stem:"Choose the option that most honestly reflects what you would do.",
+    choices:[
+      {label:"Option A",text:"Have the formal performance conversation as required. Be compassionate but clear — the performance issue needs to be addressed directly regardless of personal circumstances.",cost:"The person may feel the process is cold. The relationship risks becoming transactional. Personal circumstances may worsen under added pressure.",scores:{C:3,CN:3,SR:3,EX:2},tags:["accountability","leadership","directness"]},
+      {label:"Option B",text:"Delay the formal process. Address the personal situation first — create space for them to stabilise before adding performance pressure.",cost:"The performance issue continues. Others in the team observe the different standard. The eventual conversation — when it comes — will be harder after repeated delay.",scores:{EX:3,RA:3,IP:2,ST:2},tags:["empathy","patience","relationship"]}
+    ]
+  },
+  // S4 — Negotiation instinct
+  {
+    badge:"Situation 4 of 8",
+    context:"You are in a negotiation. You sense the other party is close to their limit — but they have not said so. Pushing further may produce a better outcome or break the deal entirely.",
+    stem:"Choose the option that most honestly reflects what you would do.",
+    choices:[
+      {label:"Option A",text:"Push further. Your read of the situation tells you there is more available — trust your instinct and go for the better outcome.",cost:"If your read is wrong the deal breaks. You get nothing when you could have had something solid. The relationship suffers.",scores:{CI:3,P:3,SR:3,IP:3},tags:["risk","instinct","influence"]},
+      {label:"Option B",text:"Accept what is available. The certain outcome is better than the risk. Protect the relationship and the deal in hand.",cost:"You leave potential value on the table. You will never know if your instinct was right. The more conservative choice may cost you cumulatively over time.",scores:{SR:2,RA:3,ST:2,CI:2},tags:["caution","certainty","relationship"]}
+    ]
+  },
+  // S5 — Credit being taken
+  {
+    badge:"Situation 5 of 8",
+    context:"A peer is taking credit for work that was substantially yours — in front of others who do not know the full picture. Your manager is not in the room.",
+    stem:"Choose the option that most honestly reflects what you would do.",
+    choices:[
+      {label:"Option A",text:"Address it in the moment — calmly add your contribution to the record while others are present.",cost:"The peer feels exposed. The dynamic turns competitive. Some in the room may see you as territorial regardless of the facts.",scores:{SR:3,C:3,CN:2,IP:2},tags:["recognition","directness","conflict"]},
+      {label:"Option B",text:"Say nothing now. Address it privately with the peer afterward — and separately ensure your manager is aware of your contribution.",cost:"In the moment the record stays incomplete. The people present carry an inaccurate picture. The peer has no immediate consequence for the behavior.",scores:{SR:3,RA:3,IP:3,ST:3},tags:["patience","strategy","relationship"]}
+    ]
+  },
+  // S6 — REWRITTEN: removes the "persistent leader" lean
+  // Old version: escalate formally vs try one more time. "Try again" felt noble.
+  // New: both options involve a real professional risk with no clear right answer.
+  {
+    badge:"Situation 6 of 8",
+    context:"A peer has consistently missed commitments to a shared project. You have raised it twice, directly and professionally. They have acknowledged it both times and nothing has changed. Your next option is to escalate to a shared manager — which will permanently change the relationship.",
+    stem:"Choose the option that most honestly reflects what you would do.",
+    choices:[
+      {label:"Option A",text:"Escalate to the shared manager now. You have done the direct work twice — this is no longer a personal issue, it is a project issue that needs structural attention.",cost:"The peer relationship ends or permanently becomes formal and guarded. You carry the weight of having been the person who escalated. Others may see it as a political move regardless of your intent.",scores:{CN:3,ST:3,SR:3,C:3},tags:["accountability","escalation","directness"]},
+      {label:"Option B",text:"Absorb the impact yourself for now — cover the gap, protect the project, and accept that this peer is not reliable. Work around them rather than through them.",cost:"You are now doing work that should not be yours. You have set a precedent that there is no consequence for letting you down. The peer learns nothing and the pattern continues.",scores:{RA:2,ST:2,SR:2,EX:2},tags:["self-reliance","avoidance","pragmatism"]}
+    ]
+  },
+  // S7 — Opportunity vs commitment
+  {
+    badge:"Situation 7 of 8",
+    context:"You are offered a significant professional opportunity — but accepting it means withdrawing from a commitment you made to someone who was counting on you.",
+    stem:"Choose the option that most honestly reflects what you would do.",
+    choices:[
+      {label:"Option A",text:"Accept the opportunity. Explain your situation honestly to the person you committed to — help them find an alternative.",cost:"The commitment is broken. Trust is damaged. The person has to manage without you when they expected you. That cost does not disappear because you explained it well.",scores:{ST:3,SR:2,RA:2,CI:2},tags:["ambition","integrity","opportunity"]},
+      {label:"Option B",text:"Decline the opportunity. Honour your commitment — your word matters more than this particular chance.",cost:"The opportunity passes. You carry the weight of what could have been. Others in your field may not understand why you passed — and the opportunity may not return.",scores:{RA:4,SR:3,EX:3,ST:2},tags:["integrity","relationship","self-sacrifice"]}
+    ]
+  },
+  // S8 — Helping vs revealing
+  {
+    badge:"Situation 8 of 8",
+    context:"You have information that would significantly help a colleague navigate a situation they are in. Sharing it directly would reveal that you have been paying close attention to something they do not know you are aware of.",
+    stem:"Choose the option that most honestly reflects what you would do.",
+    choices:[
+      {label:"Option A",text:"Share the information directly. Their need is more important than the awkwardness of explaining how you know.",cost:"You reveal that you have been observing a situation they did not know you were tracking. They may question your motives — or feel surveilled rather than helped.",scores:{EX:3,RA:3,CI:3,SR:2},tags:["transparency","helpfulness","vulnerability"]},
+      {label:"Option B",text:"Find an indirect way to surface the information — through a question or suggestion — without revealing what you already know.",cost:"The indirect route may not land clearly enough. If they later discover you knew and routed around it, the lack of directness may feel like a different kind of betrayal.",scores:{IP:3,CI:4,P:3,SR:3},tags:["influence","strategy","protection"]}
+    ]
+  }
+];
+
+// ══════════════════════════════════════════
+// PATTERN LIBRARY — v4
+// Expanded from 7 to 16 definitions.
+// More specific, more personally resonant.
+// Each has a test function against responses.
+// ══════════════════════════════════════════
+const patternLibrary = [
+  {
+    id:"relationship-anchor",
+    title:"Relationships are a consistent anchor in how you decide",
+    test:(r)=> r.filter(x=>x.choice===1&&['conflict','relationship','empathy','integrity'].some(t=>x.tags.includes(t))).length>=3,
+    body:"When situations force a choice, you lean toward protecting the relationship — even at some cost to the immediate outcome. This is a genuine strength in environments where trust compounds over time. The development question is whether this tendency ever allows patterns to continue longer than they should.",
+    note:"This pattern often appears alongside strong Relationship Architecture capability in the 360 — and a developing edge in Conflict Navigation."
+  },
+  {
+    id:"outcome-anchor",
+    title:"Getting the right outcome consistently takes priority over relational comfort",
+    test:(r)=> r.filter(x=>x.choice===0&&['conflict','accountability','recognition','directness'].some(t=>x.tags.includes(t))).length>=3,
+    body:"When situations force a tradeoff, you lean toward the direct or correct outcome — even when it carries a relational cost. This signals directness, accountability and confidence in your own judgment. The development question is whether this tendency occasionally underestimates the long-term compounding cost of relational damage.",
+    note:"This pattern often indicates strong Communication and Conflict Navigation — with Self Regulation as a potential refinement area."
+  },
+  {
+    id:"strategic-patience",
+    title:"You play longer games than most people around you",
+    test:(r)=> r.filter(x=>x.choice===1&&['patience','strategy','caution'].some(t=>x.tags.includes(t))).length>=2,
+    body:"When situations are complex, you tend to take the longer view — waiting for the right moment, accepting short-term cost for better positioning. This is a genuine strategic strength. The development question is whether patience occasionally becomes avoidance when more immediate action would serve better.",
+    note:"This pattern often indicates developing Strategic Thinking and Influence — with the timing of when to act vs when to wait as the key refinement area."
+  },
+  {
+    id:"moves-toward-difficulty",
+    title:"You move toward difficulty rather than around it",
+    test:(r)=> r.filter(x=>x.choice===0&&['courage','directness','escalation','accountability'].some(t=>x.tags.includes(t))).length>=2,
+    body:"You tend to address difficult things directly and early — even when an indirect approach might reduce friction. This signals confidence and a low tolerance for unresolved tension. The development question is whether directness always serves the situation, or whether some situations reward a less frontal approach.",
+    note:"This pattern often indicates strong Self Regulation under pressure — with Contextual Interpretation as a development opportunity for reading when directness is and is not the right instrument."
+  },
+  {
+    id:"self-protective-under-authority",
+    title:"Authority relationships activate a more cautious version of you",
+    test:(r)=> r.filter(x=>x.choice===1&&['authority','self-protection','caution'].some(t=>x.tags.includes(t))).length>=1&&r.filter(x=>x.choice===0&&['conflict','directness'].some(t=>x.tags.includes(t))).length>=1,
+    body:"You tend to be more direct with peers than with those above you. In upward authority relationships, a more risk-aware and careful version of you tends to emerge. This is common and understandable — and it is worth knowing, because the 360 will specifically measure whether your capability is consistent across power relationships or varies with them.",
+    note:"This is one of the most important patterns the 360 surfaces — the Split Observer pattern. How consistent is your capability regardless of who has power in the room?"
+  },
+  {
+    id:"instinct-trust",
+    title:"You trust your read of situations and act on it",
+    test:(r)=> r.filter(x=>x.choice===0&&['instinct','risk','influence'].some(t=>x.tags.includes(t))).length>=1,
+    body:"When your situational read tells you something, you act on it — even when the safer choice is to wait for more certainty. This signals genuine Pattern Recognition and Contextual Interpretation capability. The development question is how reliably your instinct is calibrated — and how you distinguish genuine signal from projection.",
+    note:"This is a key signal for The Architect capability — the internal simulation engine that distinguishes Level 3 from Level 4 and above."
+  },
+  {
+    id:"risk-manager",
+    title:"You manage risk carefully — you prefer the certain outcome over the possible better one",
+    test:(r)=> r.filter(x=>x.choice===1&&['risk','certainty','caution'].some(t=>x.tags.includes(t))).length>=2,
+    body:"When situations carry genuine uncertainty, you tend toward the known outcome over the possible better one. This is disciplined risk management — not timidity. The development question is whether this tendency occasionally costs you outcomes that were genuinely within reach, and how you tell the difference.",
+    note:"This pattern is worth exploring in the 360 — specifically whether others experience this as prudence or as hesitance under pressure."
+  },
+  {
+    id:"integrity-driven",
+    title:"Commitments and personal integrity are primary anchors under pressure",
+    test:(r)=> r.filter(x=>x.choice===1&&['integrity','self-sacrifice'].some(t=>x.tags.includes(t))).length>=1,
+    body:"When pressure tests your commitments, you hold them — even at real personal cost. This builds deep trust over time and signals clear values. The development question is whether this anchor occasionally prevents pragmatic recalibrations that would serve everyone — including the person you are trying to honor — better.",
+    note:"This pattern indicates Values Clarity — one of the most important Meta Skills in the HumanEdge model and a key marker for Level 4 and above."
+  },
+  {
+    id:"ambition-driven",
+    title:"Professional ambition is a consistent driver in how you weigh decisions",
+    test:(r)=> r.filter(x=>x.choice===0&&['ambition','opportunity'].some(t=>x.tags.includes(t))).length>=1,
+    body:"When opportunity and obligation conflict, you tend to prioritise the opportunity — making the pragmatic case for moving forward rather than holding still. This is honest self-knowledge. The development question is how you manage the relational wake that ambitious decisions sometimes leave.",
+    note:"Ambition and emotional intelligence are not opposites. The most effective Level 4 and 5 practitioners are clear about their ambition and equally clear about its relational cost."
+  },
+  {
+    id:"indirect-operator",
+    title:"You tend to work indirectly — through influence rather than direct assertion",
+    test:(r)=> r.filter(x=>x.choice===1&&['strategy','influence','protection'].some(t=>x.tags.includes(t))).length>=2,
+    body:"When situations require you to move people or protect yourself, you tend toward the indirect route — framing, timing, positioning — rather than direct assertion. This signals real influence capability. The development question is whether the indirect approach occasionally costs clarity — leaving people uncertain about where you actually stand.",
+    note:"This pattern often indicates developing Influence and Persuasion capability — one of the Tier 2 diagnostic skills in the 360."
+  },
+  {
+    id:"self-reliant",
+    title:"When systems fail you, you tend to absorb the problem rather than escalate it",
+    test:(r)=> r.filter(x=>x.choice===1&&['self-reliance','pragmatism','avoidance'].some(t=>x.tags.includes(t))).length>=1,
+    body:"When others underperform or let you down, your instinct is to manage around it rather than through it — absorbing the gap yourself. This often reflects competence, independence and a low tolerance for process friction. The development question is what this pattern costs you over time — and what it teaches others about the consequences of letting you down.",
+    note:"This is a common pattern in high-performing individuals. The 360 will surface whether others experience it as capability or as a signal that accountability is negotiable."
+  },
+  {
+    id:"transparent-operator",
+    title:"You lean toward transparency even when it creates personal exposure",
+    test:(r)=> r.filter(x=>x.choice===0&&['transparency','vulnerability','helpfulness'].some(t=>x.tags.includes(t))).length>=1,
+    body:"When situations ask you to choose between being fully transparent and protecting yourself, you tend toward transparency. This builds deep trust and signals genuine confidence. The development question is whether full transparency always serves the situation — or whether strategic discretion occasionally produces better outcomes for everyone involved.",
+    note:"Transparency is a strength at every level. At higher levels it is paired with strategic judgement about what to reveal, when and to whom."
+  },
+  {
+    id:"contextual-discloser",
+    title:"You read situations carefully before deciding what to reveal and how",
+    test:(r)=> r.filter(x=>x.choice===1&&['strategy','protection','influence'].some(t=>x.tags.includes(t))).length>=2,
+    body:"You tend to think carefully about what to share, when, and through what channel — rather than defaulting to full transparency. This signals situational awareness and influence capability. The development question is whether this pattern occasionally reads as opacity to people who are trying to trust you.",
+    note:"This is a common pattern in people developing toward Level 4 and above. The 360 will surface whether others experience your discretion as strategic or as guarded."
+  },
+  {
+    id:"empathy-driver",
+    title:"Others' circumstances and wellbeing are a genuine factor in how you decide",
+    test:(r)=> r.filter(x=>x.choice===1&&['empathy','relationship','self-sacrifice'].some(t=>x.tags.includes(t))).length>=2,
+    body:"When decisions affect people you care about, their circumstances influence how you decide — sometimes significantly. This signals genuine empathic orientation and is a strength in building high-trust relationships. The development question is whether this sensitivity occasionally makes it harder to make decisions that are right but feel difficult.",
+    note:"The Empathy Spectrum — one of the Meta Skills in the HumanEdge model — maps how empathy develops from simulated to approximated to true, and how it can be deployed strategically without losing its authenticity."
+  },
+  {
+    id:"accountability-driver",
+    title:"You hold yourself and others to clear standards — and find tolerance of underperformance genuinely uncomfortable",
+    test:(r)=> r.filter(x=>x.choice===0&&['accountability','escalation','directness'].some(t=>x.tags.includes(t))).length>=2,
+    body:"When performance or commitments are not met — your own or others' — you tend to address it rather than absorb or excuse it. This signals genuine accountability and creates clarity in the environments you inhabit. The development question is whether this standard is applied with enough contextual sensitivity to land as fair rather than inflexible.",
+    note:"Accountability is a consistent marker of Level 3 and above in the HumanEdge model — but how it is delivered is what distinguishes Level 3 from Level 4 and 5."
+  },
+  {
+    id:"reads-power-dynamics",
+    title:"You are consistently aware of who holds power in a situation — and factor it into how you move",
+    test:(r)=> r.filter(x=>x.choice===1&&['authority','self-protection','caution','strategy'].some(t=>x.tags.includes(t))).length>=2,
+    body:"Power dynamics are not invisible to you — you read them and factor them into your decisions. This is a real capability. The development question is whether awareness of power dynamics occasionally produces overcaution in situations where directness would actually be received better than you expect.",
+    note:"Reading power dynamics is a core component of the Level 3 and 4 typology work in HumanEdge — specifically the Power x Emotion axis. The 360 will surface whether your reading of power influences your behavior in ways others notice."
+  }
+];
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let currentScenario=0, responses=[], selectedChoice=null, shuffledChoices=[];
+
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function shuffle(a){
+  const b=[...a];
+  for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}
+  return b;
+}
+
+function initReflection(){
+  currentScenario=0;responses=[];
+  goTo('s-reflection');
+  renderScenario();
+}
+
+function renderScenario(){
+  const s=scenarios[currentScenario];
+  selectedChoice=null;
+  // Shuffle option order every render
+  shuffledChoices=shuffle(s.choices.map((c,i)=>({...c,origIdx:i})));
+
+  const pct=(currentScenario/scenarios.length)*100;
+  document.getElementById('ref-progress').style.width=pct+'%';
+  document.getElementById('ref-counter').textContent=(currentScenario+1)+' / '+scenarios.length;
+  document.getElementById('ref-badge').textContent=s.badge;
+  document.getElementById('ref-context').textContent=s.context;
+  document.getElementById('ref-stem').textContent=s.stem;
+
+  const grid=document.getElementById('ref-choices');
+  grid.innerHTML='';
+  shuffledChoices.forEach((c,i)=>{
+    const card=document.createElement('div');
+    card.className='choice-card';
+    card.innerHTML=`<div class="choice-label">${c.label}</div><div class="choice-text">${c.text}</div><div class="choice-cost">${c.cost}</div>`;
+    card.onclick=()=>selectChoice(i,card);
+    grid.appendChild(card);
+  });
+
+  document.getElementById('ref-next').disabled=true;
+  document.getElementById('ref-hint').textContent='Choose the option that most honestly reflects what you would do';
+}
+
+function selectChoice(idx,el){
+  document.querySelectorAll('.choice-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedChoice=idx;
+  document.getElementById('ref-next').disabled=false;
+  document.getElementById('ref-hint').textContent='';
+}
+
+function nextScenario(){
+  if(selectedChoice===null)return;
+  const s=scenarios[currentScenario];
+  const chosen=shuffledChoices[selectedChoice];
+  responses.push({scenario:currentScenario,choice:chosen.origIdx,tags:chosen.tags,scores:chosen.scores});
+  currentScenario++;
+  if(currentScenario>=scenarios.length) showProcessing();
+  else renderScenario();
+}
+
+function showProcessing(){
+  goTo('s-processing');
+  ['ps1','ps2','ps3','ps4'].forEach((id,i)=>{
+    setTimeout(()=>document.getElementById(id).classList.add('active'),i*450);
+  });
+  setTimeout(showPatterns,2400);
+}
+
+// ══════════════════════════════════════════
+// PATTERN ENGINE — v4
+// Tests all 16 patterns, selects 3–5
+// most relevant. Deduplication prevents
+// contradictory observations appearing together.
+// ══════════════════════════════════════════
+function showPatterns(){
+  // Run all patterns
+  let matched=patternLibrary.filter(p=>p.test(responses));
+
+  // Deduplication: remove contradictions
+  // outcome-anchor and relationship-anchor shouldn't both appear
+  const ids=matched.map(m=>m.id);
+  if(ids.includes('outcome-anchor')&&ids.includes('relationship-anchor')){
+    // Keep whichever has stronger signal
+    const outCount=responses.filter(r=>r.choice===0&&['conflict','accountability','recognition','directness'].some(t=>r.tags.includes(t))).length;
+    const relCount=responses.filter(r=>r.choice===1&&['conflict','relationship','empathy','integrity'].some(t=>r.tags.includes(t))).length;
+    if(outCount>=relCount) matched=matched.filter(m=>m.id!=='relationship-anchor');
+    else matched=matched.filter(m=>m.id!=='outcome-anchor');
+  }
+  // transparent and contextual-discloser shouldn't both appear
+  if(ids.includes('transparent-operator')&&ids.includes('contextual-discloser')){
+    matched=matched.filter(m=>m.id!=='contextual-discloser');
+  }
+  // strategic-patience and moves-toward-difficulty are contradictory
+  if(ids.includes('strategic-patience')&&ids.includes('moves-toward-difficulty')){
+    const patCount=responses.filter(r=>r.choice===1&&['patience','strategy','caution'].some(t=>r.tags.includes(t))).length;
+    const actCount=responses.filter(r=>r.choice===0&&['courage','directness','escalation','accountability'].some(t=>r.tags.includes(t))).length;
+    if(patCount>=actCount) matched=matched.filter(m=>m.id!=='moves-toward-difficulty');
+    else matched=matched.filter(m=>m.id!=='strategic-patience');
+  }
+
+  // If fewer than 3 matched, add fallback observations based on score aggregates
+  if(matched.length<3){
+    const totals={SR:0,CI:0,P:0,RA:0,ST:0,IP:0};
+    responses.forEach(r=>{Object.entries(r.scores).forEach(([k,v])=>{if(totals[k]!==undefined)totals[k]+=v;});});
+    const top=Object.entries(totals).sort((a,b)=>b[1]-a[1])[0][0];
+    const fallbacks={
+      SR:{id:'f-sr',title:"Maintaining internal stability under pressure is a consistent priority",body:"Across the situations, keeping composure and managing your own state — even at some cost to other outcomes — featured consistently in your choices.",note:"Self Regulation is the gating skill in HumanEdge. Its development underpins everything else in the model."},
+      CI:{id:'f-ci',title:"Reading the full situation before acting is a consistent pattern",body:"You tend toward interpretation before action — taking in the complete picture before committing to a response, even when speed would be rewarded.",note:"Contextual Interpretation is one of the five Tier 1 diagnostic skills in the 360."},
+      RA:{id:'f-ra',title:"Relationship quality features consistently in how you decide",body:"The long-term health of relationships appears to be a genuine anchor in your decision-making — not just a consideration but a driver.",note:"Relationship Architecture is a key output skill — how deliberately you design rather than inherit relationship dynamics."},
+      ST:{id:'f-st',title:"Long-term consequences feature in how you think about immediate decisions",body:"You tend to weigh decisions against longer time horizons — what they cost and what they enable — rather than optimising only for the present.",note:"Strategic Thinking is a Meta Skill — it governs how all other skills are deployed and developed."},
+      IP:{id:'f-ip',title:"You think carefully about how to move people rather than just telling them what you need",body:"When you need something from others, your instinct is to consider how to frame it effectively rather than simply stating it directly.",note:"Influence and Persuasion is a Tier 2 diagnostic skill in the 360 — one of the most observable indicators of EMM level."}
+    };
+    if(fallbacks[top]&&!matched.find(m=>m.id===fallbacks[top].id)){
+      matched.push(fallbacks[top]);
+    }
+  }
+
+  // Cap at 5 observations
+  matched=matched.slice(0,5);
+
+  const list=document.getElementById('observations-list');
+  list.innerHTML='';
+  matched.forEach((obs,i)=>{
+    const item=document.createElement('div');
+    item.className='observation-item';
+    item.innerHTML=`<div class="observation-title">${obs.title}</div><div class="observation-body">${obs.body}</div><div class="observation-note">${obs.note}</div>`;
+    list.appendChild(item);
+  });
+
+  // Universal closing observation
+  const universal=document.createElement('div');
+  universal.className='observation-item';
+  universal.style.borderLeftColor='var(--text3)';
+  universal.innerHTML=`<div class="observation-title" style="color:var(--text2)">These observations reflect how you think — not where you operate</div><div class="observation-body">The patterns above are directional. They tell you something real about your priorities and tendencies in difficult situations. They do not tell you your EMM level — that requires the 360 diagnostic, where the people in your life observe your actual behavior across 68 specific situations over time.</div><div class="observation-note">The gap between these self-surfaced patterns and what your 360 observers report is the most valuable data the full assessment produces.</div>`;
+  list.appendChild(universal);
+
+  goTo('s-patterns');
+}
+
+// ══════════════════════════════════════════
+// LEVELS
+// ══════════════════════════════════════════
+const levelData=[
+  {num:1,col:"#888",name:"Aware",tagline:"I am beginning to see the patterns",desc:"Most people never consciously examine behavioral patterns — their own or others'. Level 1 is where that examination begins."},
+  {num:2,col:"#378ADD",name:"Observant",tagline:"I read patterns with growing accuracy",desc:"Observation becomes active and deliberate. What others miss — the gap between words and body, the shift in energy — becomes visible."},
+  {num:3,col:"#1D9E75",name:"Responsive",tagline:"I respond strategically rather than reactively",desc:"The critical threshold. Reading people accurately translates into deliberate response. Strategy replaces instinct under pressure."},
+  {num:4,col:"#C4A050",name:"Proactive",tagline:"I anticipate and shape situations before they unfold",desc:"The game changes. Anticipation replaces response as the primary mode. Situations are shaped before others know the shaping has begun."},
+  {num:5,col:"#D47F7F",name:"Architect",tagline:"I design the systems within which others operate",desc:"Influence becomes systemic. Entire relationship ecosystems are designed. Group dynamics are shaped without direct instruction or authority."},
+  {num:6,col:"#7F77DD",name:"Inception",tagline:"I cultivate conditions from which outcomes grow naturally",desc:"The apex. Ideas are planted so precisely they germinate as the other person's own conviction. The garden tends itself. No ceiling — only deepening."}
+];
+
+function hexToRgb(hex){
+  const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return r?parseInt(r[1],16)+','+parseInt(r[2],16)+','+parseInt(r[3],16):'128,128,128';
+}
+
+function buildLevels(){
+  const c=document.getElementById('levels-display');
+  c.innerHTML='';
+  levelData.forEach(l=>{
+    const row=document.createElement('div');
+    row.className='level-row';
+    row.innerHTML=`<div class="level-num" style="color:${l.col};background:rgba(${hexToRgb(l.col)},0.06);border:1px solid rgba(${hexToRgb(l.col)},0.2);border-right:none">${l.num}</div><div class="level-body"><div class="level-name">${l.name} <span style="color:var(--text3);font-size:10px;font-style:italic">— ${l.tagline}</span></div><div class="level-tagline" style="margin-top:4px">${l.desc}</div></div>`;
+    c.appendChild(row);
+  });
+}
+
+// ══════════════════════════════════════════
+// OBSERVER SLOTS
+// ══════════════════════════════════════════
+function buildObserverSlots(){
+  const c=document.getElementById('observer-slots-container');
+  c.innerHTML='';
+  [{cat:"Above",badge:"badge-above",count:2},{cat:"Peer",badge:"badge-peer",count:3},{cat:"Below",badge:"badge-below",count:2},{cat:"Personal",badge:"badge-personal",count:1,optional:true}].forEach(cat=>{
+    const sec=document.createElement('div');
+    sec.style.marginBottom='16px';
+    let h='<div class="observer-slots">';
+    for(let i=0;i<cat.count;i++){
+      h+=`<div class="observer-slot"><div class="slot-cat"><span class="observer-cat-badge ${cat.badge}" style="font-size:8px">${cat.cat}</span></div><input type="text" placeholder="${cat.optional?'Optional — '+cat.cat+' observer name':'Observer name or initials'}"></div>`;
+    }
+    h+='</div>';
+    sec.innerHTML=h;
+    c.appendChild(sec);
+  });
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  buildLevels();
+  buildObserverSlots();
+});
+</script>
+</body>
+</html>

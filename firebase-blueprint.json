@@ -1,0 +1,167 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Extended user profile data stored in Firestore",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "name": { "type": "string" },
+        "age": { "type": "number" },
+        "profession": { "type": "string" },
+        "state": { "type": "string" },
+        "city": { "type": "string" },
+        "gender": { "type": "string" },
+        "selfDiscoveryCompleted": { "type": "boolean" },
+        "selfDiscoveryAnswers": { "type": "array" },
+        "selfDiscoveryScores": { "type": "object" },
+        "selfDiscoveryLevel": { "type": "integer" },
+        "selfDiscoveryObservations": { "type": "array" },
+        "selfDiscoveryObserversPlan": { "type": "object" },
+        "threeSixtySelfCompleted": { "type": "boolean" },
+        "threeSixtySelfAnswers": { "type": "object" },
+        "threeSixtySelfImpacts": { "type": "object" },
+        "threeSixtyCompleted": { "type": "boolean" },
+        "threeSixtyScores": { "type": "object" },
+        "cmmLevel": { "type": "integer" },
+        "assessmentScores": { "type": "object" },
+        "assignments": { "type": "array" },
+        "sessions": { "type": "array" },
+        "tier": { "type": "string", "enum": ["free", "premium"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "introPhilosophyCompleted": { "type": "boolean" },
+        "introTemplateCompleted": { "type": "boolean" },
+        "introTutorialCompleted": { "type": "boolean" },
+        "premiumPromoActive": { "type": "boolean" },
+        "hasPremiumPromoActive": { "type": "boolean" },
+        "hasFreeTool5Access": { "type": "boolean" },
+        "hasAdminMasterAccess": { "type": "boolean" },
+        "streakPromoActivatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "createdAt"]
+    },
+    "Friend": {
+      "title": "Friend Connection",
+      "description": "Friend relationship and streak details for gamification",
+      "type": "object",
+      "properties": {
+        "friendId": { "type": "string" },
+        "friendName": { "type": "string" },
+        "friendEmail": { "type": "string" },
+        "streak": { "type": "number" },
+        "lastActive": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["friendId", "friendName", "streak"]
+    },
+    "Reflection": {
+      "title": "Daily EQ Reflection Journal Entry",
+      "description": "Daily self-reflection entries for EQ feedback loops",
+      "type": "object",
+      "properties": {
+        "situation": { "type": "string" },
+        "reaction": { "type": "string" },
+        "intensity": { "type": "number" },
+        "trigger": { "type": "string", "enum": ["internal", "external", ""] },
+        "whoInvolved": { "type": "string" },
+        "physicalSymptoms": { "type": "array" },
+        "customSymptom": { "type": "string" },
+        "thoughts": { "type": "string" },
+        "outcome": { "type": "string" },
+        "differently": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["situation", "createdAt"]
+    },
+    "PromoCode": {
+      "title": "Promo Code",
+      "description": "Promo code definition and usage counter",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "type": { "type": "string", "enum": ["team", "testing"] },
+        "maxUses": { "type": "integer" },
+        "usedCount": { "type": "integer" },
+        "usersRedeemed": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["code", "type", "maxUses", "usedCount", "usersRedeemed"]
+    },
+    "OrganizationInvite": {
+      "title": "Organization Invitation",
+      "description": "Corporate or team registration invitation",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "registered"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "registeredAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "status"]
+    },
+    "SupportRequest": {
+      "title": "Support Request Ticket",
+      "description": "User support tickets or contact requests submitted via the app",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "org": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "type": { "type": "string" },
+        "message": { "type": "string" },
+        "userId": { "type": "string" },
+        "category": { "type": "string" },
+        "submittedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "message"]
+    },
+    "NewsletterSubscription": {
+      "title": "Newsletter Subscription",
+      "description": "Subscribers of the cognitive research newsletter",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "source": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/newsletterSubscriptions/{subscriptionId}": {
+      "schema": "NewsletterSubscription",
+      "description": "Newsletter subscribers' registered emails"
+    },
+    "/supportRequests/{requestId}": {
+      "schema": "SupportRequest",
+      "description": "Public and dashboard user support ticket submissions"
+    },
+    "/promoCodes/{codeId}": {
+      "schema": "PromoCode",
+      "description": "Promo code definition document"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile document"
+    },
+    "/users/{userId}/friends/{friendId}": {
+      "schema": "Friend",
+      "description": "Friends list and joint streak tracker"
+    },
+    "/users/{userId}/reflections/{reflectionId}": {
+      "schema": "Reflection",
+      "description": "Daily EQ reflection log document"
+    },
+    "/users/{userId}/organizationInvites/{inviteId}": {
+      "schema": "OrganizationInvite",
+      "description": "Organization invitation log document"
+    }
+  }
+}

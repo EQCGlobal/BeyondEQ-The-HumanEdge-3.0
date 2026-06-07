@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;600&family=Inter:wght@300;400;600&display=swap');
+@import "tailwindcss";
+
+@utility no-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", serif;
+}
+
+html, body, #root,
+.cursor-brain,
+.cursor-brain body,
+.cursor-brain #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  background-color: #FFFFFF;
+  color: #000;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  /* Premium Brand Cursor: Precision Arrow with Vertically Split Brain (Hotspot at pointer tip 2,1) */
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cg transform='translate(-8, -11) scale(1.7)'%3E%3Cpath d='M 21.2 13 C 17.5 12, 14 15, 13 18.5 C 12.2 21.5, 14 25, 16.5 27 C 18 28.2, 20 28.5, 21.2 28.2 Z' fill='%235F5A7E' /%3E%3Cpath d='M 21.2 13 C 24.9 12, 28.4 15, 29.4 18.5 C 30.2 21.5, 28.4 25, 25.9 27 C 24.4 28.2, 22.4 28.5, 21.2 28.2 Z' fill='%2349C4F4' /%3E%3Cpath d='M 18,17 Q 16,19 19,21 M 15,20 Q 18,22 17,25 M 19,14 Q 17,16 16,15 M 20,25 Q 18,26 19,27' fill='none' stroke='white' stroke-width='0.8' stroke-linecap='round' opacity='0.8' /%3E%3Cpath d='M 24.4,17 Q 26.4,19 23.4,21 M 27.4,20 Q 24.4,22 25.4,25 M 23.4,14 Q 25.4,16 26.4,15 M 22.4,25 Q 24.4,26 23.4,27' fill='none' stroke='white' stroke-width='0.8' stroke-linecap='round' opacity='0.8' /%3E%3C/g%3E%3Cpath d='M 2,1 L 2,19 L 6.8,14.6 L 11,23 L 13.5,21.8 L 9.3,13.4 L 14.8,13.4 Z' fill='white' stroke='black' stroke-width='2' stroke-linejoin='miter' /%3E%3C/svg%3E") 2 1, auto;
+}
+
+/* Ensure interactive elements change the cursor but preserve the brand arrow + brain icon */
+a, button, [role="button"], select, select *, input[type="submit"], input[type="button"], [class*="cursor-pointer"],
+.cursor-brain a,
+.cursor-brain button,
+.cursor-brain [role="button"],
+.cursor-brain select,
+.cursor-brain select *,
+.cursor-brain input[type="submit"],
+.cursor-brain input[type="button"],
+.cursor-brain [class*="cursor-pointer"] {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cg transform='translate(-8, -11) scale(1.7)'%3E%3Cpath d='M 21.2 13 C 17.5 12, 14 15, 13 18.5 C 12.2 21.5, 14 25, 16.5 27 C 18 28.2, 20 28.5, 21.2 28.2 Z' fill='%235F5A7E' /%3E%3Cpath d='M 21.2 13 C 24.9 12, 28.4 15, 29.4 18.5 C 30.2 21.5, 28.4 25, 25.9 27 C 24.4 28.2, 22.4 28.5, 21.2 28.2 Z' fill='%2349C4F4' /%3E%3Cpath d='M 18,17 Q 16,19 19,21 M 15,20 Q 18,22 17,25 M 19,14 Q 17,16 16,15 M 20,25 Q 18,26 19,27' fill='none' stroke='white' stroke-width='0.8' stroke-linecap='round' opacity='0.8' /%3E%3Cpath d='M 24.4,17 Q 26.4,19 23.4,21 M 27.4,20 Q 24.4,22 25.4,25 M 23.4,14 Q 25.4,16 26.4,15 M 22.4,25 Q 24.4,26 23.4,27' fill='none' stroke='white' stroke-width='0.8' stroke-linecap='round' opacity='0.8' /%3E%3C/g%3E%3Cpath d='M 2,1 L 2,19 L 6.8,14.6 L 11,23 L 13.5,21.8 L 9.3,13.4 L 14.8,13.4 Z' fill='white' stroke='black' stroke-width='2' stroke-linejoin='miter' /%3E%3C/svg%3E") 2 1, pointer !important;
+}
+
+/* Custom premium brand cursor for heart designated pages: About and What We Do */
+.cursor-heart,
+.cursor-heart body,
+.cursor-heart #root {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cg transform='translate(-10, -18) scale(1.7)'%3E%3Cpath d='M 21.5,17 C 20, 13.5, 14, 13.5, 13.5, 18.5 C 13, 23, 17.5, 26, 21.5, 28.5 C 25.5, 26, 30, 23, 29.5, 18.5 C 29, 13.5, 23, 13.5, 21.5, 17 Z' fill='%23E51C23' /%3E%3Cpath d='M 15.5,18 C 15.5,16.5, 17.5,15.5, 19,15.5' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' opacity='0.6' /%3E%3C/g%3E%3Cpath d='M 2,1 L 2,19 L 6.8,14.6 L 11,23 L 13.5,21.8 L 9.3,13.4 L 14.8,13.4 Z' fill='white' stroke='black' stroke-width='2' stroke-linejoin='miter' /%3E%3C/svg%3E") 2 1, auto !important;
+}
+
+/* Interactive elements update style but preserve core arrow + heart icon */
+.cursor-heart a,
+.cursor-heart button,
+.cursor-heart [role="button"],
+.cursor-heart select,
+.cursor-heart select *,
+.cursor-heart input[type="submit"],
+.cursor-heart input[type="button"],
+.cursor-heart [class*="cursor-pointer"] {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cg transform='translate(-10, -18) scale(1.7)'%3E%3Cpath d='M 21.5,17 C 20, 13.5, 14, 13.5, 13.5, 18.5 C 13, 23, 17.5, 26, 21.5, 28.5 C 25.5, 26, 30, 23, 29.5, 18.5 C 29, 13.5, 23, 13.5, 21.5, 17 Z' fill='%23E51C23' /%3E%3Cpath d='M 15.5,18 C 15.5,16.5, 17.5,15.5, 19,15.5' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' opacity='0.6' /%3E%3C/g%3E%3Cpath d='M 2,1 L 2,19 L 6.8,14.6 L 11,23 L 13.5,21.8 L 9.3,13.4 L 14.8,13.4 Z' fill='white' stroke='black' stroke-width='2' stroke-linejoin='miter' /%3E%3C/svg%3E") 2 1, pointer !important;
+}
+
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}
+
+canvas {
+  touch-action: none;
+}

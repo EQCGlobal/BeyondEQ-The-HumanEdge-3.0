@@ -1,0 +1,6 @@
+{
+  "name": "BeyondEQ",
+  "description": "A sophisticated Emotional Intelligence (EI) platform featuring the BeyondEQ 3.0 model, interactive Bias Codex, and neuroscientific insights.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
