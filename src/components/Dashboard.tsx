@@ -1000,9 +1000,16 @@ export default function Dashboard() {
         const freshCodes = ['ADMIN404', 'TEAM1', 'IPN40'];
         for (const codeDoc of snap.docs) {
           const upperId = codeDoc.id.toUpperCase();
-          if (!freshCodes.includes(upperId)) {
-            console.log("Removing outdated promo code doc from DB:", codeDoc.id);
-            await deleteDoc(doc(db, 'promoCodes', codeDoc.id));
+          const docData = codeDoc.data();
+          const expectedMaxUses = upperId === 'ADMIN404' ? 999999 : (upperId === 'IPN40' ? 40 : 15);
+          // Delete outdated codes, or codes that are missing 'createdAt' or are malformed (e.g. from previous rule configurations)
+          if (!freshCodes.includes(upperId) || !docData || !docData.createdAt || docData.maxUses !== expectedMaxUses) {
+            console.log("Removing outdated or malformed promo code doc from DB:", codeDoc.id);
+            try {
+              await deleteDoc(doc(db, 'promoCodes', codeDoc.id));
+            } catch (delErr) {
+              console.warn("Could not delete outdated promo code doc:", codeDoc.id, delErr);
+            }
           }
         }
       } catch (err) {
@@ -1689,12 +1696,18 @@ export default function Dashboard() {
 
     try {
       const codeRef = doc(db, 'promoCodes', trimmed);
-      let codeSnap = await getDoc(codeRef);
+      let codeSnap;
+      try {
+        codeSnap = await getDoc(codeRef);
+      } catch (getErr: any) {
+        console.error("Failed to fetch promo code document:", getErr);
+        handleFirestoreError(getErr, OperationType.GET, `promoCodes/${trimmed}`);
+      }
 
       const allowedCodes = ['ADMIN404', 'TEAM1', 'IPN40'];
 
       // Bootstrapping the code dynamically in Firestore if it is an allowed code and doesn't exist yet
-      if (!codeSnap.exists()) {
+      if (!codeSnap || !codeSnap.exists()) {
         if (allowedCodes.includes(trimmed)) {
           let maxUses = 15;
           if (trimmed === 'ADMIN404') {
@@ -1702,15 +1715,25 @@ export default function Dashboard() {
           } else if (trimmed === 'IPN40') {
             maxUses = 40;
           }
-          await setDoc(codeRef, {
-            code: trimmed,
-            type: trimmed === 'TEAM1' ? 'team' : 'testing',
-            maxUses: maxUses,
-            usedCount: 0,
-            usersRedeemed: [],
-            createdAt: serverTimestamp()
-          });
-          codeSnap = await getDoc(codeRef);
+          try {
+            await setDoc(codeRef, {
+              code: trimmed,
+              type: trimmed === 'TEAM1' ? 'team' : 'testing',
+              maxUses: maxUses,
+              usedCount: 0,
+              usersRedeemed: [],
+              createdAt: serverTimestamp()
+            });
+          } catch (createErr: any) {
+            console.error("Failed to bootstrap promo code document:", createErr);
+            handleFirestoreError(createErr, OperationType.CREATE, `promoCodes/${trimmed}`);
+          }
+          try {
+            codeSnap = await getDoc(codeRef);
+          } catch (getErr2: any) {
+            console.error("Failed to fetch promo code document after creation:", getErr2);
+            handleFirestoreError(getErr2, OperationType.GET, `promoCodes/${trimmed}`);
+          }
         } else {
           setPromoError("Invalid promotional code.");
           setIsPromoVerifying(false);
@@ -1762,22 +1785,32 @@ export default function Dashboard() {
       // 3. Redeem!
       // Atomically update promo code document ONLY if we haven't already registered
       if (!alreadyRedeemedInCode) {
-        await updateDoc(codeRef, {
-          usedCount: increment(1),
-          usersRedeemed: arrayUnion(user.uid),
-          updatedAt: serverTimestamp()
-        });
+        try {
+          await updateDoc(codeRef, {
+            usedCount: increment(1),
+            usersRedeemed: arrayUnion(user.uid),
+            updatedAt: serverTimestamp()
+          });
+        } catch (updatePromoErr: any) {
+          console.error("Failed to update promo code usedCount/usersRedeemed:", updatePromoErr);
+          handleFirestoreError(updatePromoErr, OperationType.UPDATE, `promoCodes/${trimmed}`);
+        }
       }
 
       const userDocRef = doc(db, 'users', user.uid);
       if (trimmed === 'IPN40') {
         // Unlock all individual tools and 5th assessment report
-        await updateDoc(userDocRef, {
-          tier: 'premium',
-          hasPremiumPromoActive: true,
-          hasFreeTool5Access: true,
-          updatedAt: serverTimestamp()
-        });
+        try {
+          await updateDoc(userDocRef, {
+            tier: 'premium',
+            hasPremiumPromoActive: true,
+            hasFreeTool5Access: true,
+            updatedAt: serverTimestamp()
+          });
+        } catch (updateUserErr: any) {
+          console.error("Failed to update user profile to premium (IPN40):", updateUserErr);
+          handleFirestoreError(updateUserErr, OperationType.UPDATE, `users/${user.uid}`);
+        }
         setPromoSuccess(`Success! Code ${trimmed} applied. Free Access to Individual Tools & Assessment 5 is now active!`);
         
         setTimeout(() => {
@@ -1792,14 +1825,19 @@ export default function Dashboard() {
         }, 1500);
       } else { // ADMIN404 or TEAM1
         // Upgrade user's tier inside Firestore to premium and register premium promo active with full admin master access
-        await updateDoc(userDocRef, {
-          tier: 'premium',
-          hasPremiumPromoActive: true,
-          hasFreeTool5Access: true,
-          hasAdminMasterAccess: true,
-          premiumPromoActive: false, // ensure no locks on comparative gaps
-          updatedAt: serverTimestamp()
-        });
+        try {
+          await updateDoc(userDocRef, {
+            tier: 'premium',
+            hasPremiumPromoActive: true,
+            hasFreeTool5Access: true,
+            hasAdminMasterAccess: true,
+            premiumPromoActive: false, // ensure no locks on comparative gaps
+            updatedAt: serverTimestamp()
+          });
+        } catch (updateUserErr: any) {
+          console.error("Failed to update user profile to admin (ADMIN404/TEAM1):", updateUserErr);
+          handleFirestoreError(updateUserErr, OperationType.UPDATE, `users/${user.uid}`);
+        }
         setPromoSuccess(`Success! Code ${trimmed} applied. Unlimited Full Access to All Tools unlocked successfully!`);
         
         setTimeout(() => {
@@ -1816,11 +1854,17 @@ export default function Dashboard() {
 
     } catch (err: any) {
       console.error("Error applying promotional code:", err);
-      try {
-        handleFirestoreError(err, OperationType.WRITE, `promoCodes`);
-      } catch (logErr: any) {
-        setPromoError("Access error: " + (err.message || err));
+      // Clean display message
+      let displayMessage = err.message || String(err);
+      if (displayMessage.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(displayMessage);
+          displayMessage = parsed.error || displayMessage;
+        } catch (je) {
+          // Keep raw
+        }
       }
+      setPromoError("Access error: " + displayMessage);
     } finally {
       setIsPromoVerifying(false);
     }
