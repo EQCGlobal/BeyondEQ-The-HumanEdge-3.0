@@ -87,7 +87,7 @@ service cloud.firestore {
       return data.code == codeId
              && data.code is string && data.code.size() <= 50
              && data.type is string && (data.type == 'team' || data.type == 'testing')
-             && data.maxUses is number && data.maxUses >= 1 && data.maxUses <= 100
+             && data.maxUses is number && data.maxUses >= 1 && data.maxUses <= 1000000
              && data.usedCount is number && data.usedCount == 0
              && data.usersRedeemed is list && data.usersRedeemed.size() == 0;
     }
@@ -106,7 +106,7 @@ service cloud.firestore {
       allow create: if isSignedIn() 
                     && isValidPromoCode(request.resource.data, codeId)
                     && request.resource.data.createdAt == request.time
-                    && (codeId == 'TEAM_EQ_1' || codeId == 'TEAM_EQ_2' || codeId == 'TEAM_EQ_3' || codeId == 'TEAM_EQ_4' || codeId == 'TEAM_EQ_5' || codeId == 'TEST_PREMIUM_2026' || codeId == 'TEST_CODE_5' || codeId == 'SPECIAL_TEST_CODE' || codeId == 'TEST10' || codeId == 'IPN40M' || codeId == 'FREE_TOOL5_55' || codeId == 'ADMIN1');
+                    && (codeId == 'ADMIN404' || codeId == 'TEAM1' || codeId == 'IPN40');
       allow update: if isSignedIn()
                     && request.resource.data.code == resource.data.code
                     && request.resource.data.type == resource.data.type

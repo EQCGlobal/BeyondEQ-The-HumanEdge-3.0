@@ -374,31 +374,6 @@ export default function Login() {
         </p>
       </motion.div>
 
-      {/* Dev Environment Purge Suite */}
-      <div className="w-full max-w-xl relative z-10 bg-stone-50 border border-stone-200 rounded-[30px] p-6 space-y-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="text-left space-y-1">
-            <h4 className="text-xs font-black text-stone-900 uppercase tracking-widest font-sans flex items-center gap-1.5 flex-wrap">
-              <span>🔧</span>
-              <span>Developer Sandbox Reset</span>
-            </h4>
-            <p className="text-[10px] text-stone-500 leading-normal font-sans font-medium">
-              Wipe out all registered testing profiles, organization maps, and associated diagnostic results from the active database to start a fresh evaluation.
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              setPurgeSuccess(false);
-              setPurgeStatus('');
-              setShowPurgeModal(true);
-            }}
-            className="px-4 py-2.5 bg-[#104C64] hover:bg-[#0D3E52] text-white rounded-xl font-black text-[9.5px]/none uppercase tracking-wider transition-all cursor-pointer shadow-sm shrink-0 font-sans"
-          >
-            Purge All Data
-          </button>
-        </div>
-      </div>
-
       {/* Custom React-State Confirmation & Execution Modal */}
       {showPurgeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-md transition-all">

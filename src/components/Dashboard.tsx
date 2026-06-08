@@ -8,7 +8,7 @@ import {
 } from 'recharts';
 import { Users, Share2, Copy, CheckCircle2, ChevronRight, Compass, Shield, BookOpen, UserCheck, Sparkles, HelpCircle, Lock, Mail, ChevronDown, Calendar, Clock, PlayCircle, Plus, Trash2, History, ClipboardList, PenTool, CheckSquare, Square, Heart, Brain, Activity, Flame, X, CreditCard, Smartphone, Building2, ShieldAlert, Download, ArrowRight, ArrowDown, Tag, Printer } from 'lucide-react';
 import MoodTracker from './MoodTracker';
-import { doc, updateDoc, serverTimestamp, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, getDoc, setDoc, increment, arrayUnion } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, getDoc, getDocs, setDoc, increment, arrayUnion } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import DiagnosticReport from './DiagnosticReport';
 import { calculateThreeSixtyResults } from '../lib/threeSixtySkills';
@@ -990,6 +990,28 @@ export default function Dashboard() {
 
   const location = useLocation();
 
+  // Dynamically clean up outdated promo codes from active database
+  useEffect(() => {
+    if (!user) return;
+    const cleanOldCodes = async () => {
+      try {
+        const promoCollection = collection(db, 'promoCodes');
+        const snap = await getDocs(promoCollection);
+        const freshCodes = ['ADMIN404', 'TEAM1', 'IPN40'];
+        for (const codeDoc of snap.docs) {
+          const upperId = codeDoc.id.toUpperCase();
+          if (!freshCodes.includes(upperId)) {
+            console.log("Removing outdated promo code doc from DB:", codeDoc.id);
+            await deleteDoc(doc(db, 'promoCodes', codeDoc.id));
+          }
+        }
+      } catch (err) {
+        console.warn("Outdated promo codes cleanup:", err);
+      }
+    };
+    cleanOldCodes();
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
     const friendsRef = collection(db, 'users', user.uid, 'friends');
@@ -1669,29 +1691,20 @@ export default function Dashboard() {
       const codeRef = doc(db, 'promoCodes', trimmed);
       let codeSnap = await getDoc(codeRef);
 
-      const allowedCodes = [
-        'TEAM_EQ_1', 'TEAM_EQ_2', 'TEAM_EQ_3', 'TEAM_EQ_4', 'TEAM_EQ_5',
-        'TEST_PREMIUM_2026', 'TEST_CODE_5', 'FREE_TOOL5_55', 'SPECIAL_TEST_CODE',
-        'TEST10', 'IPN40M', 'ADMIN1'
-      ];
+      const allowedCodes = ['ADMIN404', 'TEAM1', 'IPN40'];
 
       // Bootstrapping the code dynamically in Firestore if it is an allowed code and doesn't exist yet
       if (!codeSnap.exists()) {
         if (allowedCodes.includes(trimmed)) {
-          const isTeamCode = trimmed.startsWith('TEAM');
-          let maxUses = 5;
-          if (trimmed === 'TEST10') {
-            maxUses = 10;
-          } else if (trimmed === 'IPN40M') {
+          let maxUses = 15;
+          if (trimmed === 'ADMIN404') {
+            maxUses = 999999;
+          } else if (trimmed === 'IPN40') {
             maxUses = 40;
-          } else if (trimmed === 'FREE_TOOL5_55') {
-            maxUses = 55;
-          } else if (trimmed === 'ADMIN1') {
-            maxUses = 100;
           }
           await setDoc(codeRef, {
             code: trimmed,
-            type: trimmed === 'ADMIN1' ? 'testing' : (isTeamCode ? 'team' : 'testing'),
+            type: trimmed === 'TEAM1' ? 'team' : 'testing',
             maxUses: maxUses,
             usedCount: 0,
             usersRedeemed: [],
@@ -1714,19 +1727,14 @@ export default function Dashboard() {
 
       // 1. Check if user already redeemed, and check if user document is out of sync
       const alreadyRedeemedInCode = codeData.usersRedeemed && codeData.usersRedeemed.includes(user.uid);
-      const isTool5Code = (trimmed === 'TEST_CODE_5' || trimmed === 'FREE_TOOL5_55' || trimmed === 'IPN40M');
       
       let userNeedsUpdate = false;
-      if (isTool5Code) {
-        if (!profile?.hasFreeTool5Access) {
+      if (trimmed === 'IPN40') {
+        if (userTier !== 'premium' || !profile?.hasFreeTool5Access || !(profile as any)?.hasPremiumPromoActive) {
           userNeedsUpdate = true;
         }
-      } else if (trimmed === 'ADMIN1') {
+      } else { // ADMIN404 or TEAM1
         if (userTier !== 'premium' || !(profile as any)?.hasPremiumPromoActive || !(profile as any)?.hasAdminMasterAccess) {
-          userNeedsUpdate = true;
-        }
-      } else {
-        if (userTier !== 'premium' || !(profile as any)?.hasPremiumPromoActive) {
           userNeedsUpdate = true;
         }
       }
@@ -1737,19 +1745,15 @@ export default function Dashboard() {
         return;
       }
 
-      let maxUses = codeData.maxUses || 5;
-      if (trimmed === 'TEST10') {
-        maxUses = 10;
-      } else if (trimmed === 'IPN40M') {
+      let maxUses = codeData.maxUses || 15;
+      if (trimmed === 'ADMIN404') {
+        maxUses = 999999;
+      } else if (trimmed === 'IPN40') {
         maxUses = 40;
-      } else if (trimmed === 'FREE_TOOL5_55') {
-        maxUses = 55;
-      } else if (trimmed === 'ADMIN1') {
-        maxUses = 100;
       }
 
-      // 2. Check if reached max uses (only if not already registered in code)
-      if (!alreadyRedeemedInCode && codeData.usedCount >= maxUses) {
+      // 2. Check if reached max uses (only if not already registered in code and not ADMIN404)
+      if (!alreadyRedeemedInCode && trimmed !== 'ADMIN404' && codeData.usedCount >= maxUses) {
         setPromoError(`This promotional code has reached its maximum usage limit of ${maxUses}.`);
         setIsPromoVerifying(false);
         return;
@@ -1766,35 +1770,15 @@ export default function Dashboard() {
       }
 
       const userDocRef = doc(db, 'users', user.uid);
-      if (trimmed === 'TEST_CODE_5' || trimmed === 'FREE_TOOL5_55' || trimmed === 'IPN40M') {
-        // Unlock Assessment 5 for free but NOT the premium tier
-        await updateDoc(userDocRef, {
-          hasFreeTool5Access: true,
-          updatedAt: serverTimestamp()
-        });
-        setPromoSuccess(`Success! Code ${trimmed} applied. Free Access to Assessment 5 (Unified Toolkit Report) is now active!`);
-        
-        setTimeout(() => {
-          setIsUpgradeModalOpen(false);
-          setIsEnterpriseCheckoutOpen(false);
-          setIsPromoModalOpen(false);
-          setIsTool5SuccessModalOpen(true);
-          // Reset states
-          setPromoCodeInput('');
-          setPromoSuccess(null);
-          setIsPromoExpanded(false);
-        }, 1500);
-      } else if (trimmed === 'ADMIN1') {
-        // Upgrade user's tier inside Firestore to premium and register premium promo active with full admin master access
+      if (trimmed === 'IPN40') {
+        // Unlock all individual tools and 5th assessment report
         await updateDoc(userDocRef, {
           tier: 'premium',
           hasPremiumPromoActive: true,
           hasFreeTool5Access: true,
-          hasAdminMasterAccess: true,
-          premiumPromoActive: false, // ensure no locks on comparative gaps
           updatedAt: serverTimestamp()
         });
-        setPromoSuccess(`Success! Code ${trimmed} applied. Unlimited Full Access to All Tools unlocked successfully!`);
+        setPromoSuccess(`Success! Code ${trimmed} applied. Free Access to Individual Tools & Assessment 5 is now active!`);
         
         setTimeout(() => {
           setIsUpgradeModalOpen(false);
@@ -1806,14 +1790,17 @@ export default function Dashboard() {
           setPromoSuccess(null);
           setIsPromoExpanded(false);
         }, 1500);
-      } else {
-        // Upgrade user's tier inside Firestore to premium and register premium promo active
+      } else { // ADMIN404 or TEAM1
+        // Upgrade user's tier inside Firestore to premium and register premium promo active with full admin master access
         await updateDoc(userDocRef, {
           tier: 'premium',
           hasPremiumPromoActive: true,
+          hasFreeTool5Access: true,
+          hasAdminMasterAccess: true,
+          premiumPromoActive: false, // ensure no locks on comparative gaps
           updatedAt: serverTimestamp()
         });
-        setPromoSuccess(`Success! Code ${trimmed} applied. Welcome to BeyondEQ Premium!`);
+        setPromoSuccess(`Success! Code ${trimmed} applied. Unlimited Full Access to All Tools unlocked successfully!`);
         
         setTimeout(() => {
           setIsUpgradeModalOpen(false);
