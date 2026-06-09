@@ -79,11 +79,13 @@ function translateError(errorMsg: string, userType: 'individual' | 'enterprise' 
 }
 
 export default function FirebaseErrorAlert({ error, onClear, userType = 'individual' }: FirebaseErrorAlertProps) {
-  const isOperationNotAllowed = error.toLowerCase().includes('auth/operation-not-allowed') || error.toLowerCase().includes('operation-not-allowed');
+  const errorLower = error.toLowerCase();
+  const isOperationNotAllowed = errorLower.includes('auth/operation-not-allowed') || errorLower.includes('operation-not-allowed');
+  const isUnauthorizedDomain = errorLower.includes('auth/unauthorized-domain') || errorLower.includes('unauthorized-domain');
 
   const displayedError = translateError(error, userType);
 
-  if (!isOperationNotAllowed) {
+  if (!isOperationNotAllowed && !isUnauthorizedDomain) {
     return (
       <div className="p-5 mb-6 bg-red-50 border border-red-250 text-red-700 text-xs font-bold rounded-2xl text-center leading-relaxed font-sans shadow-sm flex flex-col items-center justify-center gap-2">
         <ShieldAlert className="w-5 h-5 text-red-500" />
@@ -96,6 +98,70 @@ export default function FirebaseErrorAlert({ error, onClear, userType = 'individ
             Clear error and retry
           </button>
         )}
+      </div>
+    );
+  }
+
+  if (isUnauthorizedDomain) {
+    const authorizedDomainsUrl = "https://console.firebase.google.com/project/gen-lang-client-0131109540/authentication/settings";
+    const currentHostname = typeof window !== 'undefined' ? window.location.hostname : 'beyondeq.org';
+
+    return (
+      <div id="firebase-domain-alert" className="p-6 mb-8 bg-[#fffbeb] border border-[#fef3c7] rounded-[32px] text-amber-950 font-sans shadow-md ring-4 ring-amber-500/5 hover:shadow-lg transition-all">
+        <div className="flex items-start gap-4">
+          <div className="p-3 bg-amber-100 rounded-2xl text-amber-750 shrink-0">
+            <ShieldAlert className="w-6 h-6 stroke-[2]" />
+          </div>
+          <div className="space-y-3 flex-1 text-left">
+            <h4 className="text-sm font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5 font-sans">
+              Firebase Domain Authorization Required
+            </h4>
+            <p className="text-xs text-amber-850 font-sans leading-relaxed">
+              The domain <span className="font-bold underline decoration-amber-400">{currentHostname}</span> has not been authorized for Google Sign-in within your Firebase Authentication settings.
+            </p>
+
+            <div className="bg-amber-100/40 border border-amber-200/50 rounded-2xl p-4 space-y-2.5">
+              <h5 className="text-[10px] font-black uppercase tracking-widest text-amber-800 flex items-center gap-1.5 font-sans">
+                <HelpCircle className="w-3.5 h-3.5 text-amber-600" /> How to authorize this domain (in 30 seconds):
+              </h5>
+              <ol className="list-decimal list-inside text-[11px] text-amber-900 space-y-1.5 leading-relaxed font-sans font-medium">
+                <li>
+                  Click the <span className="font-extrabold text-amber-950">"Authorize Domains In Console"</span> button below.
+                </li>
+                <li>
+                  Scroll down to the <span className="font-bold text-amber-950">"Authorized domains"</span> section.
+                </li>
+                <li>
+                  Click <span className="font-bold text-amber-950">"Add domain"</span>.
+                </li>
+                <li>
+                  Enter exactly <span className="font-extrabold text-[#104C64]">{currentHostname}</span> (and also <span className="font-extrabold text-stone-700">beyondeq.org</span> if not already added) and click <span className="font-black">Add</span>.
+                </li>
+              </ol>
+            </div>
+
+            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <a 
+                href={authorizedDomainsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-5 py-3 bg-[#104C64] hover:bg-[#0D3E52] text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-md transition-colors font-sans decoration-transparent active:scale-95 cursor-pointer border border-[#104C64]/10"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-[#41B1C2] stroke-[2.5]" />
+                Authorize Domains In Console
+              </a>
+              
+              {onClear && (
+                <button
+                  onClick={onClear}
+                  className="px-4 py-3 text-stone-600 hover:text-stone-900 text-[10px] font-black uppercase tracking-wider bg-stone-100 border border-stone-200 hover:bg-stone-150 rounded-xl transition-all cursor-pointer text-center font-sans active:scale-95"
+                >
+                  Clear & Try Again
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
