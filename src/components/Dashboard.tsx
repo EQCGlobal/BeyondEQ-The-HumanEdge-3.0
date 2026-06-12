@@ -997,11 +997,11 @@ export default function Dashboard() {
       try {
         const promoCollection = collection(db, 'promoCodes');
         const snap = await getDocs(promoCollection);
-        const freshCodes = ['ADMIN404', 'TEAM1', 'IPN40'];
+        const freshCodes = ['ADMIN404', 'TEAM1', 'IPN40', 'IPN15ME'];
         for (const codeDoc of snap.docs) {
           const upperId = codeDoc.id.toUpperCase();
           const docData = codeDoc.data();
-          const expectedMaxUses = upperId === 'ADMIN404' ? 999999 : (upperId === 'IPN40' ? 40 : 15);
+          const expectedMaxUses = upperId === 'ADMIN404' ? 999999 : (upperId === 'IPN40' ? 40 : (upperId === 'IPN15ME' ? 18 : 15));
           // Delete outdated codes, or codes that are missing 'createdAt' or are malformed (e.g. from previous rule configurations)
           if (!freshCodes.includes(upperId) || !docData || !docData.createdAt || docData.maxUses !== expectedMaxUses) {
             console.log("Removing outdated or malformed promo code doc from DB:", codeDoc.id);
@@ -1704,7 +1704,7 @@ export default function Dashboard() {
         handleFirestoreError(getErr, OperationType.GET, `promoCodes/${trimmed}`);
       }
 
-      const allowedCodes = ['ADMIN404', 'TEAM1', 'IPN40'];
+      const allowedCodes = ['ADMIN404', 'TEAM1', 'IPN40', 'IPN15ME'];
 
       // Bootstrapping the code dynamically in Firestore if it is an allowed code and doesn't exist yet
       if (!codeSnap || !codeSnap.exists()) {
@@ -1714,6 +1714,8 @@ export default function Dashboard() {
             maxUses = 999999;
           } else if (trimmed === 'IPN40') {
             maxUses = 40;
+          } else if (trimmed === 'IPN15ME') {
+            maxUses = 18;
           }
           try {
             await setDoc(codeRef, {
@@ -1752,7 +1754,7 @@ export default function Dashboard() {
       const alreadyRedeemedInCode = codeData.usersRedeemed && codeData.usersRedeemed.includes(user.uid);
       
       let userNeedsUpdate = false;
-      if (trimmed === 'IPN40') {
+      if (trimmed === 'IPN40' || trimmed === 'IPN15ME') {
         if (userTier !== 'premium' || !profile?.hasFreeTool5Access || !(profile as any)?.hasPremiumPromoActive) {
           userNeedsUpdate = true;
         }
@@ -1773,6 +1775,8 @@ export default function Dashboard() {
         maxUses = 999999;
       } else if (trimmed === 'IPN40') {
         maxUses = 40;
+      } else if (trimmed === 'IPN15ME') {
+        maxUses = 18;
       }
 
       // 2. Check if reached max uses (only if not already registered in code and not ADMIN404)
@@ -1798,7 +1802,7 @@ export default function Dashboard() {
       }
 
       const userDocRef = doc(db, 'users', user.uid);
-      if (trimmed === 'IPN40') {
+      if (trimmed === 'IPN40' || trimmed === 'IPN15ME') {
         // Unlock all individual tools and 5th assessment report
         try {
           await updateDoc(userDocRef, {
@@ -1808,7 +1812,7 @@ export default function Dashboard() {
             updatedAt: serverTimestamp()
           });
         } catch (updateUserErr: any) {
-          console.error("Failed to update user profile to premium (IPN40):", updateUserErr);
+          console.error(`Failed to update user profile to premium (${trimmed}):`, updateUserErr);
           handleFirestoreError(updateUserErr, OperationType.UPDATE, `users/${user.uid}`);
         }
         setPromoSuccess(`Success! Code ${trimmed} applied. Free Access to Individual Tools & Assessment 5 is now active!`);
