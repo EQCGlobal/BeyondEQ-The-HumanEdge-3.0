@@ -105,15 +105,15 @@ service cloud.firestore {
       allow delete: if isSignedIn();
       allow create: if isSignedIn() 
                     && isValidPromoCode(request.resource.data, codeId)
-                    && request.resource.data.createdAt == request.time
+                    && (request.resource.data.get('createdAt', null) == null || request.resource.data.createdAt == request.time)
                     && (codeId == 'ADMIN404' || codeId == 'TEAM1' || codeId == 'IPN40' || codeId == 'IPN15ME');
       allow update: if isSignedIn()
-                    && request.resource.data.code == resource.data.code
-                    && request.resource.data.type == resource.data.type
-                    && request.resource.data.maxUses == resource.data.maxUses
-                    && request.resource.data.createdAt == resource.data.createdAt
+                    && request.resource.data.get('code', '') == resource.data.get('code', '')
+                    && request.resource.data.get('type', '') == resource.data.get('type', '')
+                    && request.resource.data.get('maxUses', 0) == resource.data.get('maxUses', 0)
+                    && (request.resource.data.get('createdAt', null) == null || resource.data.get('createdAt', null) == null || request.resource.data.createdAt == resource.data.createdAt)
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount', 'usersRedeemed', 'updatedAt'])
-                    && request.resource.data.usedCount <= resource.data.maxUses
+                    && request.resource.data.usedCount <= request.resource.data.get('maxUses', 999999)
                     && request.resource.data.usersRedeemed is list
                     && (request.resource.data.get('updatedAt', null) == null || request.resource.data.updatedAt == request.time);
     }
